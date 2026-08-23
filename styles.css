@@ -1,66 +1,868 @@
-html, body {
+/* ==============================================
+   CSV Viewer - design tokens
+   ============================================== */
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --accent: #6366f1;
+  --gradient: linear-gradient(135deg, #818cf8 0%, #6366f1 45%, #22d3ee 100%);
+
+  --r-sm: 10px;
+  --r-lg: 24px;
+
+  --ease: cubic-bezier(.22, .61, .36, 1);
+}
+
+/* -- dark (default) -- */
+:root,
+[data-theme='dark'] {
+  --bg: #0a0c13;
+  --surface: rgba(255, 255, 255, .04);
+  --surface-2: rgba(255, 255, 255, .07);
+  --border: rgba(255, 255, 255, .09);
+  --border-2: rgba(255, 255, 255, .18);
+  --text: #e9ecf5;
+  --text-2: #9aa3ba;
+  --text-3: #6b748c;
+  --glow-1: rgba(99, 102, 241, .38);
+  --glow-2: rgba(34, 211, 238, .20);
+  --shadow: 0 24px 70px -24px rgba(0, 0, 0, .9);
+
+  --grid-line: rgba(255, 255, 255, .07);
+  /* cell/header backgrounds must be OPAQUE: Handsontable paints `tr` white
+     and `td` inherits it, so any transparency lets that white bleed through */
+  --cell-bg: #0c0f17;
+  --row-alt: #101420;
+  --head-bg: #151a28;
+  --head-hl: #1f2740;
+  --editor-bg: #1a2033;
+  --sel: rgba(99, 102, 241, .22);
+  --toolbar-bg: rgba(10, 12, 19, .72);
+}
+
+/* -- light -- */
+[data-theme='light'] {
+  --bg: #f6f7fb;
+  --surface: rgba(255, 255, 255, .78);
+  --surface-2: #ffffff;
+  --border: rgba(15, 20, 40, .10);
+  --border-2: rgba(15, 20, 40, .22);
+  --text: #10142a;
+  --text-2: #5b6480;
+  --text-3: #8b93aa;
+  --glow-1: rgba(99, 102, 241, .26);
+  --glow-2: rgba(34, 211, 238, .20);
+  --shadow: 0 20px 50px -22px rgba(21, 27, 56, .35);
+
+  --grid-line: rgba(15, 20, 40, .09);
+  --cell-bg: #ffffff;
+  --row-alt: #f7f9fd;
+  --head-bg: #eef1f8;
+  --head-hl: #dfe5f5;
+  --editor-bg: #ffffff;
+  --sel: rgba(99, 102, 241, .14);
+  --toolbar-bg: rgba(246, 247, 251, .78);
+}
+
+/* ==============================================
+   base
+   ============================================== */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
   height: 100%;
 }
 
 body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body.has-data {
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--sel);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* -- ambient background -- */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora::before,
+.aurora::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+}
+
+.aurora::before {
+  width: 640px;
+  height: 640px;
+  background: var(--glow-1);
+  top: -260px;
+  left: -180px;
+  animation: float-a 22s var(--ease) infinite alternate;
+}
+
+.aurora::after {
+  width: 560px;
+  height: 560px;
+  background: var(--glow-2);
+  bottom: -280px;
+  right: -160px;
+  animation: float-b 26s var(--ease) infinite alternate;
+}
+
+@keyframes float-a {
+  to { transform: translate3d(90px, 60px, 0) scale(1.15); }
+}
+
+@keyframes float-b {
+  to { transform: translate3d(-80px, -50px, 0) scale(1.1); }
+}
+
+/* ==============================================
+   landing
+   ============================================== */
+.landing {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 48px 20px;
+}
+
+body.has-data .landing {
+  display: none;
+}
+
+.hero {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-family: Montserrat, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  text-align: center;
+  max-width: 620px;
+  animation: rise .7s var(--ease) both;
 }
 
-#handsontable-container.handsontable {
-  height: 100%;
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
 }
 
-/* input */
-input[type=file] {
-  width: 350px;
-  max-width: 100%;
-  color: #444;
-  padding: 5px;
-  background: #fff;
-  border-radius: 10px;
-  border: 1px solid #555;
-}
-
-input[type=file]::file-selector-button {
-  margin-right: 20px;
-  border: none;
-  background: #084cdf;
-  padding: 10px 20px;
-  border-radius: 10px;
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 66px;
+  border-radius: 20px;
+  background: var(--gradient);
   color: #fff;
-  cursor: pointer;
-  transition: background .2s ease-in-out;
+  box-shadow: 0 16px 40px -12px var(--glow-1), inset 0 1px 0 rgba(255, 255, 255, .35);
 }
 
-input[type=file]::file-selector-button:hover {
-  background: #0d45a5;
+.brand-mark svg {
+  width: 32px;
+  height: 32px;
 }
 
-.drop-container {
+.brand-mark.sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  flex: none;
+}
+
+.brand-mark.sm svg {
+  width: 19px;
+  height: 19px;
+}
+
+h1 {
+  margin: 26px 0 0;
+  font-size: clamp(2.4rem, 6vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: -.035em;
+  line-height: 1.05;
+  background: linear-gradient(180deg, var(--text) 30%, var(--text-2) 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tagline {
+  margin: 14px 0 0;
+  color: var(--text-2);
+  font-size: 1.02rem;
+  max-width: 46ch;
+  text-wrap: balance;
+}
+
+/* -- dropzone -- */
+.dropzone {
   position: relative;
   display: flex;
-  gap: 10px;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  width: 350px;
-  padding: 20px;
-  border-radius: 10px;
-  border: 2px dashed #555;
-  color: #444;
+  gap: 6px;
+  width: min(520px, 100%);
+  margin-top: 38px;
+  padding: 44px 28px 40px;
+  border-radius: var(--r-lg);
+  border: 1.5px dashed var(--border-2);
+  background: var(--surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow);
   cursor: pointer;
-  transition: background .2s ease-in-out, border .2s ease-in-out;
+  transition: border-color .25s var(--ease), background .25s var(--ease), transform .25s var(--ease);
 }
 
-.drop-container:hover {
-  background: #eee;
-  border-color: #111;
+.dropzone::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(120% 90% at 50% 0%, var(--glow-1), transparent 62%);
+  opacity: 0;
+  transition: opacity .3s var(--ease);
+  pointer-events: none;
 }
 
-.drop-container:hover .drop-title {
-  color: #222;
+.dropzone:hover,
+.dropzone:focus-within {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.dropzone:hover::after,
+.dropzone:focus-within::after {
+  opacity: .35;
+}
+
+.dz-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  transition: transform .3s var(--ease);
+}
+
+.dropzone:hover .dz-icon {
+  transform: translateY(-3px);
+}
+
+.dz-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.dz-title {
+  font-size: 1.06rem;
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+
+.dz-sub {
+  color: var(--text-2);
+  font-size: .92rem;
+}
+
+.dz-sub b {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* -- secondary bits -- */
+.ghost-link {
+  margin-top: 20px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: .9rem;
+  cursor: pointer;
+  transition: color .2s var(--ease), background .2s var(--ease);
+}
+
+.ghost-link:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-3);
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+
+/* ==============================================
+   viewer
+   ============================================== */
+.viewer {
+  display: none;
+}
+
+body.has-data .viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  animation: fade .45s var(--ease) both;
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  flex: none;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--toolbar-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.tb-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.file-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.file-name {
+  font-weight: 600;
+  font-size: .95rem;
+  letter-spacing: -.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-stats {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: .72rem;
+}
+
+/* -- search -- */
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search svg {
+  position: absolute;
+  left: 11px;
+  width: 15px;
+  height: 15px;
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+.search input {
+  width: 210px;
+  padding: 8px 12px 8px 33px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: .87rem;
+  outline: none;
+  transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+
+.search input::placeholder {
+  color: var(--text-3);
+}
+
+.search input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.search input::-webkit-search-cancel-button {
+  filter: grayscale(1) opacity(.5);
+  cursor: pointer;
+}
+
+/* -- buttons -- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 15px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--gradient);
+  color: #fff;
+  font: inherit;
+  font-size: .87rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 22px -10px var(--glow-1);
+  transition: transform .18s var(--ease), box-shadow .18s var(--ease), filter .18s var(--ease);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.07);
+  box-shadow: 0 12px 26px -10px var(--glow-1);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: color .2s var(--ease), border-color .2s var(--ease), transform .2s var(--ease);
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  border-color: var(--border-2);
+  transform: scale(1.06);
+}
+
+.icon-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.theme-toggle {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 40;
+  box-shadow: var(--shadow);
+}
+
+[data-theme='dark'] .i-moon,
+[data-theme='light'] .i-sun {
+  display: none;
+}
+
+:where(.btn, .icon-btn, .ghost-link, .dropzone, input):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* -- table shell -- */
+.table-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+#handsontable-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* an author `display` beats the UA's `[hidden] { display: none }`, so the
+   hidden attribute needs to be honoured explicitly */
+.empty[hidden] {
+  display: none;
+}
+
+.empty {
+  position: absolute;
+  inset: 0;
+  /* above every Handsontable layer: clones reach 180, the editor 200 */
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--bg);
+  color: var(--text-2);
+  text-align: center;
+}
+
+.empty strong {
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.empty span {
+  font-size: .9rem;
+}
+
+/* ==============================================
+   Handsontable theme overrides
+   ============================================== */
+.handsontable {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* Handsontable ships `.handsontable tr { background: #fff }` — kill it, or the
+   white row shows through anything translucent painted on the cells */
+.handsontable tr {
+  background-color: transparent;
+}
+
+.handsontable td,
+.handsontable th {
+  border-color: var(--grid-line);
+  color: var(--text);
+  padding: 0 12px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.handsontable tbody td {
+  background-color: var(--cell-bg);
+}
+
+.handsontable tbody tr:nth-child(even) td {
+  background-color: var(--row-alt);
+}
+
+/* readOnly cells get `htDimmed` (#777 by default) — unreadable on dark */
+.handsontable .htDimmed,
+.handsontable .htPlaceholder {
+  color: var(--text);
+}
+
+.handsontable thead th,
+.handsontable tbody th,
+.ht_clone_top,
+.ht_clone_left,
+.ht_clone_inline_start,
+.ht_clone_top_left_corner,
+.ht_clone_top_inline_start_corner {
+  background-color: var(--head-bg);
+}
+
+.handsontable thead th {
+  color: var(--text-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  height: 40px;
+}
+
+.handsontable tbody th {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  text-align: center;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.handsontable .num-cell {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+}
+
+/* highlight + selection.
+   The selected range is tinted by a `::before` overlay hardcoded to #005eff —
+   recolour it rather than fighting it with a cell background. */
+.handsontable td.area::before,
+.handsontable td.area-1::before,
+.handsontable td.area-2::before,
+.handsontable td.area-3::before,
+.handsontable td.area-4::before,
+.handsontable td.area-5::before,
+.handsontable td.area-6::before,
+.handsontable td.area-7::before {
+  background: var(--accent);
+}
+
+[data-theme='dark'] .handsontable td.area::before {
+  opacity: .2;
+}
+
+/* header of the selected cell's row/column */
+.handsontable tbody th.ht__highlight,
+.handsontable thead th.ht__highlight,
+.handsontable th.active {
+  background-color: var(--head-hl);
+  color: var(--text);
+}
+
+/* header of a fully selected row/column (default: #8eb0e7, reads as white here) */
+.handsontable tbody th.ht__active_highlight,
+.handsontable thead th.ht__active_highlight {
+  background-color: var(--accent);
+  color: #fff;
+}
+
+/* the cell editor is white with a blue ring by default */
+.handsontable .handsontableInput {
+  background-color: var(--editor-bg);
+  color: var(--text);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.handsontable .wtBorder.current,
+.handsontable .wtBorder.area,
+.handsontable .wtBorder.fill {
+  background-color: var(--accent) !important;
+}
+
+/* sorting indicator */
+.handsontable span.colHeader.columnSorting::before {
+  opacity: .65;
+}
+
+[data-theme='dark'] .handsontable span.colHeader.columnSorting::before {
+  filter: invert(1) brightness(1.8);
+}
+
+.handsontable span.colHeader.columnSorting:hover::before {
+  opacity: 1;
+}
+
+/* resize handle */
+.handsontable .manualColumnResizer:hover,
+.handsontable .manualColumnResizer.active {
+  background-color: var(--accent);
+}
+
+/* scrollbars */
+.handsontable .wtHolder {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+
+.handsontable .wtHolder::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.handsontable .wtHolder::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.handsontable .wtHolder::-webkit-scrollbar-thumb {
+  background: var(--border-2);
+  border: 3px solid transparent;
+  border-radius: 99px;
+  background-clip: content-box;
+}
+
+.handsontable .wtHolder::-webkit-scrollbar-thumb:hover {
+  background: var(--text-3);
+  background-clip: content-box;
+}
+
+/* ==============================================
+   drop overlay + toast
+   ============================================== */
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s var(--ease);
+}
+
+body.is-dragging .drop-overlay {
+  opacity: 1;
+}
+
+.drop-overlay-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: min(560px, 100%);
+  padding: 60px 40px;
+  border-radius: var(--r-lg);
+  border: 2px dashed var(--accent);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.1rem;
+  font-weight: 600;
+  transform: scale(.97);
+  transition: transform .25s var(--ease);
+}
+
+body.is-dragging .drop-overlay-card {
+  transform: scale(1);
+}
+
+.drop-overlay-card svg {
+  width: 40px;
+  height: 40px;
+  color: var(--accent);
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  z-index: 80;
+  padding: 11px 18px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: .88rem;
+  font-weight: 500;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  opacity: 0;
+  transform: translate(-50%, 12px);
+  pointer-events: none;
+  transition: opacity .25s var(--ease), transform .25s var(--ease);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.toast.error {
+  border-color: color-mix(in srgb, #f43f5e 55%, var(--border));
+}
+
+/* ==============================================
+   responsive & motion
+   ============================================== */
+@media (max-width: 620px) {
+  .toolbar {
+    padding: 10px 12px;
+  }
+
+  .tb-group {
+    flex: 1 1 auto;
+  }
+
+  .search {
+    flex: 1;
+  }
+
+  .search input {
+    width: 100%;
+  }
+
+  .btn span {
+    display: none;
+  }
+
+  .btn {
+    padding: 8px 11px;
+  }
+
+  .theme-toggle {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .dropzone {
+    padding: 34px 20px 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }
